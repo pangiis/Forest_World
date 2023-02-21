@@ -1,0 +1,90 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[System.Serializable]
+public class Sound
+{
+    public string name; 
+    public AudioClip clip; 
+}
+
+public class SoundManager : MonoBehaviour
+{
+
+    static public SoundManager instance;
+    #region singleton
+    void Awake() //오브젝트가 생성될 때 호출
+    {
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+
+        else
+            Destroy(gameObject);
+    }
+    #endregion singleton
+
+    public AudioSource[] audioSourceEffects;
+    public AudioSource audioSourceBgm;
+
+    public string[] playSoundName;
+
+    public Sound[] effectSounds;
+    public Sound[] bgmSounds;
+
+    //배열의 크기를 audioSourceEffects 재생기 개수와 일치시킨다.
+    void Start()
+    {
+        playSoundName = new string[audioSourceEffects.Length];
+    }
+    //효과음 재생
+    public void PlaySE(string _name)
+    {
+        for (int i = 0; i < effectSounds.Length; i++)
+        {
+            if (_name == effectSounds[i].name)
+            {
+                for (int j = 0; j < audioSourceEffects.Length; j++)
+                {
+                    if (!audioSourceEffects[j].isPlaying)
+                    {
+                        audioSourceEffects[j].clip = effectSounds[i].clip;
+                        audioSourceEffects[j].Play();
+                        playSoundName[j] = effectSounds[i].name;
+                        return;
+                    }
+
+                }
+                Debug.Log("모든 가용 AudioSource가 사용중입니다.");
+                return;
+            }
+        }
+
+        Debug.Log(_name + "사운드가 SoundManager에 등록되지 않았습니다.");
+    }
+    //모든 효과음 재생을 멈춤
+    public void StopAllSE()
+    {
+        for (int i = 0; i < audioSourceEffects.Length; i++)
+        {
+            audioSourceEffects[i].Stop();
+        }
+    }
+    //특정 효과음의 재생을 멈춤
+    public void StopSE(string _name)
+    {
+        for (int i = 0; i < audioSourceEffects.Length; i++)
+        {
+            if (playSoundName[i] == _name)
+            {
+                audioSourceEffects[i].Stop();
+                break;
+            }
+        }
+        Debug.Log("재생 중인" + _name + "사운드가 없습니다.");
+    }
+
+}

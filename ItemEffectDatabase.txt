@@ -1,0 +1,66 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+[System.Serializable] 
+public class ItemEffect
+{
+    //아이템 효과
+    public string itemName;  
+    [Tooltip("HP, SP, DP 만 가능합니다.")]
+    public string[] part; 
+    public int[] num;  
+}
+public class ItemEffectDatabase : MonoBehaviour
+{
+    //필요한 컴포넌트
+    [SerializeField]
+    private ItemEffect[] itemEffects;
+
+    private const string HP = "HP", SP = "SP", DP = "DP";
+
+    [SerializeField]
+    private StatusController thePlayerStatus;
+    [SerializeField]
+    private WeaponManager theWeaponManager;
+
+
+    //아이템 소모시 장비면 장착 소모품이면 사용
+    public void UseItem(Item _item)
+    {
+        if (_item.itemType == Item.ItemType.Equipment)
+        {
+            // 장착
+            StartCoroutine(theWeaponManager.ChangeWeaponCoroutine(_item.weaponType, _item.itemName));
+        }
+        if (_item.itemType == Item.ItemType.Used)
+        {
+            for (int i = 0; i < itemEffects.Length; i++)
+            {
+                if (itemEffects[i].itemName == _item.itemName)
+                {
+                    for (int j = 0; j < itemEffects[i].part.Length; j++)
+                    {
+                        switch (itemEffects[i].part[j])
+                        {
+                            case HP:
+                                thePlayerStatus.IncreaseHP(itemEffects[i].num[j]);
+                                break;
+                            case DP:
+                                thePlayerStatus.IncreaseDP(itemEffects[i].num[j]);
+                                break;
+                            
+                              
+                            default:
+                                Debug.Log("잘못된 Status 부위. HP, SP, DP, HUNGRY, THIRSTY, SATISFY 만 가능합니다.");
+                                break;
+                        }
+                        Debug.Log(_item.itemName + " 을 사용했습니다.");
+                    }
+                    return;
+                }
+            }
+            Debug.Log("itemEffectDatabase에 일치하는 itemName이 없습니다.");
+        }
+    }
+}
+

@@ -1,0 +1,133 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Tree : MonoBehaviour
+{
+    [SerializeField]
+    private GameObject[] go_treePieces;  
+    [SerializeField]
+    private GameObject go_treeCenter;  
+
+    [SerializeField]
+    private GameObject go_Log_Prefabs;  
+
+    [SerializeField]
+    private float force;  
+    [SerializeField]
+    private GameObject go_ChildTree; 
+
+    [SerializeField]
+    private CapsuleCollider parentCol;  
+    [SerializeField]
+    private CapsuleCollider childCol;  
+    [SerializeField]
+    private Rigidbody childRigid; 
+
+    [SerializeField]
+    private GameObject go_hit_effect_prefab;  
+    [SerializeField]
+    private float debrisDestroyTime;  
+
+    [SerializeField]
+    private float destroyTime;  
+
+    [SerializeField]
+    private string chop_sound;  
+    [SerializeField]
+    private string falldown_sound;  
+    [SerializeField]
+    private string logChange_sound;
+
+
+
+    // 도끼질 한 Y 방향 회전값 확인 이펙트 효과 재생
+    public void Chop(Vector3 _pos, float angleY)
+    {
+        SoundManager.instance.PlaySE(chop_sound);
+        Hit(_pos);
+
+        AngleCalc(angleY);
+
+        if (CheckTreePieces())
+            return;
+
+        FallDownTree();
+    }
+    //도끼로 칠때 사운드 효과 활성화
+    private void Hit(Vector3 _pos)
+    {
+      
+        SoundManager.instance.PlaySE(chop_sound);
+
+        GameObject clone = Instantiate(go_hit_effect_prefab, _pos, Quaternion.Euler(Vector3.zero));
+        Destroy(clone, debrisDestroyTime);
+    }
+
+    //도끼로 친 곳 나무 조각 파괴
+    private void AngleCalc(float _angleY)
+    {
+        if (_angleY >= 0 && _angleY <= 70)
+            DestroyPiece(2);
+        else if (_angleY >= 70 && _angleY <= 140)
+            DestroyPiece(3);
+        else if (_angleY >= 140 && _angleY <= 210)
+            DestroyPiece(4);
+        else if (_angleY >= 210 && _angleY <= 280)
+            DestroyPiece(0);
+        else if (_angleY >= 280 && _angleY <= 360)
+            DestroyPiece(1);
+    }
+
+    private void DestroyPiece(int _num)
+    {
+        if (go_treePieces[_num].gameObject != null)
+        {
+            GameObject clone = Instantiate(go_hit_effect_prefab, go_treePieces[_num].transform.position, Quaternion.Euler(Vector3.zero));
+            Destroy(clone, debrisDestroyTime);
+            Destroy(go_treePieces[_num].gameObject);
+        }
+    }
+    //남아있는 조각 확인
+    private bool CheckTreePieces()
+    {
+        for (int i = 0; i < go_treePieces.Length; i++)
+        {
+            if (go_treePieces[i].gameObject != null)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //나무 쓰러 뜨리기
+    private void FallDownTree()
+    {
+        SoundManager.instance.PlaySE(falldown_sound);
+
+        Destroy(go_treeCenter);
+
+        parentCol.enabled = false;
+        childCol.enabled = true;
+        childRigid.useGravity = true;
+
+        childRigid.AddForce(Random.Range(-force, force), 0f, Random.Range(-force, force));
+
+        StartCoroutine(LogCoroutine());
+    }
+
+    //나무 아이템 생성
+    IEnumerator LogCoroutine()
+    {
+        yield return new WaitForSeconds(destroyTime);
+
+        SoundManager.instance.PlaySE(logChange_sound);
+
+        Instantiate(go_Log_Prefabs, go_ChildTree.transform.position + (go_ChildTree.transform.up * 3f), Quaternion.LookRotation(go_ChildTree.transform.up));
+        Instantiate(go_Log_Prefabs, go_ChildTree.transform.position + (go_ChildTree.transform.up * 6f), Quaternion.LookRotation(go_ChildTree.transform.up));
+        Instantiate(go_Log_Prefabs, go_ChildTree.transform.position + (go_ChildTree.transform.up * 9f), Quaternion.LookRotation(go_ChildTree.transform.up));
+
+        Destroy(go_ChildTree.gameObject);
+    }
+}
